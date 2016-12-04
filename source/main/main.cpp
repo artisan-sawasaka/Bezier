@@ -47,7 +47,7 @@ void MainApp::Initialize()
 	Reload_();
 	
 	// 各種カウンター初期化
-	stop_counter_.set(0, GetWidth() - 100, 6);
+	stop_counter_.set(0, GetWidth() - 150, 6);
 	root_counter_.set(0, GetWidth(), 4);
 	fade_counter_.set(0, 0, 1);
 	cursor_counter_.set(0, 10, -3);
@@ -77,7 +77,7 @@ void MainApp::Update(float df)
 		fade_counter_.set(fade_counter_, 255, 30);
 	} else if (GetKeyState('S') < 0) {
 		// 止まったカウンターを再度再生
-		stop_counter_.set(0, GetWidth() - 100, 6);
+		stop_counter_.set(0, stop_counter_.getEnd(), 6);
 	} else if (GetKeyState('1') < 0) {
 		SetBezier_(Bezier::Linear);
 	} else if (GetKeyState('2') < 0) {
@@ -94,6 +94,8 @@ void MainApp::Update(float df)
 		SetBezier_(Bezier::EaseInOutBack);
 	} else if (GetKeyState('8') < 0) {
 		SetBezier_(Bezier::EaseInCirc);
+	} else if (GetKeyState('9') < 0) {
+		SetBezier_(Bezier::ControlPoint(MasterData::Const.x1, MasterData::Const.y1, MasterData::Const.x2, MasterData::Const.y2));
 	}
 
 	++stop_counter_;
@@ -150,19 +152,24 @@ void MainApp::Update(float df)
 	Renderer::GetInstance()->FillRect(0, 0, GetWidth(), GetHeight(), Gdiplus::Color(fade_counter_, 0, 0, 0));
 
 	// 操作説明
-	int y = 0;
-	Renderer::GetInstance()->DrawString("マスター読み込み:R",      0, y++ * 16, 12);
-	Renderer::GetInstance()->DrawString("フェードイン:I",          0, y++ * 16, 12);
-	Renderer::GetInstance()->DrawString("フェードアウト:O",        0, y++ * 16, 12);
-	Renderer::GetInstance()->DrawString("とまる～を再度移動:S",    0, y++ * 16, 12);
-	Renderer::GetInstance()->DrawString("Bezier::Linear:1",        0, y++ * 16, 12);
-	Renderer::GetInstance()->DrawString("Bezier::EaseIn:2",        0, y++ * 16, 12);
-	Renderer::GetInstance()->DrawString("Bezier::EaseOut:3",       0, y++ * 16, 12);
-	Renderer::GetInstance()->DrawString("Bezier::EaseInOut:4",     0, y++ * 16, 12);
-	Renderer::GetInstance()->DrawString("Bezier::EaseInBack:5",    0, y++ * 16, 12);
-	Renderer::GetInstance()->DrawString("Bezier::EaseOutBack:6",   0, y++ * 16, 12);
-	Renderer::GetInstance()->DrawString("Bezier::EaseInOutBack:7", 0, y++ * 16, 12);
-	Renderer::GetInstance()->DrawString("Bezier::EaseInCirc:8",    0, y++ * 16, 12);
+	static const char* ds[] = {
+		"R:マスター読み込み",
+		"I:フェードイン",
+		"O:フェードアウト",
+		"S:とまる～を再度移動",
+		"1:Bezier::Linear:",
+		"2:Bezier::EaseIn:",
+		"3:Bezier::EaseOut",
+		"4:Bezier::EaseInOut",
+		"5:Bezier::EaseInBack",
+		"6:Bezier::EaseOutBack",
+		"7:Bezier::EaseInOutBack",
+		"8:Bezier::EaseInCirc",
+		"9:Bezier オリジナル",
+	};
+	for (int i = 0; i < sizeof(ds) / sizeof(*ds); ++i) {
+		Renderer::GetInstance()->DrawString(ds[i], 0, i * 16, 12);
+	}
 
 	// FPS表示
 	Renderer::GetInstance()->DrawString(RIGHT_TOP, GetWidth(), 0, 16, Gdiplus::Color::White, _T("FPS:%.1f"), GetAverageFPS());
@@ -175,6 +182,9 @@ void MainApp::Reload_()
 {
 	// マスターデータを再読み込み
 	MasterData::Reload("data/master");
+
+	// FPSの設定
+	SetFPS(MasterData::Const.FPS);
 
 	// 画像を再読み込み
 	bitmaps_.clear();

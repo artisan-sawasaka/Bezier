@@ -6,6 +6,7 @@ namespace MasterData
 {
     std::map<std::string, TitleImageListData> TitleImageList;
     std::vector<TitleUIData> TitleUI;
+    ConstData Const;
 
 
     void Reload(const std::string& path)
@@ -28,6 +29,10 @@ namespace MasterData
         for (size_t i = 0; i < TitleUI.size(); ++i) {
             TitleUI[i].Load(reader);
         }
+
+        buffer = File::ReadAllBytes(path + "/Const.dat");
+        reader = StreamReader(buffer);
+        Const.Load(reader);
 
     }
 }
