@@ -181,7 +181,13 @@ void MainApp::Update(float df)
 void MainApp::Reload_()
 {
 	// マスターデータを再読み込み
+	char current[MAX_PATH];
+	GetCurrentDirectoryA(sizeof(current), current);
+	SetCurrentDirectoryA("resource");
+	system("call create_binary.bat");
+	SetCurrentDirectoryA(current);
 	MasterData::Reload("data/master");
+
 
 	// FPSの設定
 	SetFPS(MasterData::Const.FPS);

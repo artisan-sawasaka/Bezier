@@ -161,7 +161,7 @@ LRESULT CALLBACK AppBase::WndProc_(HWND hWnd, UINT msg, UINT wParam, LONG lParam
 			SetWindowLong(hWnd, GWL_USERDATA, reinterpret_cast< long >(app));
 			break;
 		}
-	case WM_DESTROY:
+	case WM_DESTROY :
 		::PostQuitMessage(0);
 		return 0;
 	case WM_SYSKEYDOWN :

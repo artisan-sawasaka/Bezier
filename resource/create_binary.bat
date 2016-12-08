@@ -19,5 +19,3 @@ mkdir %BINARY_DIR%
 :: マスターデータ作成
 :: ------------------------------
 %TOOL% -x %XLSX_DIR% -b %BINARY_DIR%
-
-pause
