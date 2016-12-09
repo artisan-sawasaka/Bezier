@@ -128,7 +128,7 @@ void MainApp::Update(float df)
 		const auto& info = *it;
 		if (info.type == 0) {
 			// ‰æ‘œ•`‰æ
-			auto it2 = MasterData::TitleImageList.find(info.name);
+			auto it2 = MasterData::TitleImageList.find(info.str);
 			if (it2 == MasterData::TitleImageList.end()) continue ;
 			const auto& info2 = it2->second;
 			auto it3 = bitmaps_.find(info2.path);
