@@ -51,17 +51,22 @@ public :
 	/*!
 	 * @brief 文字列描画
 	 */
-	void DrawString(const char* s, int x, int y, int size = 20, const Gdiplus::Color& color = Gdiplus::Color::White);
+	void DrawString(const char* s, Anchor anchor, int x, int y, int size = 20, const Gdiplus::Color& color = Gdiplus::Color::White);
 
 	/*!
 	 * @brief 文字列描画
 	 */
-	void DrawString(Anchor anchor, int x, int y, int size, const Gdiplus::Color& color, const char* s, ...);
+	void DrawString(const wchar_t* s, Anchor anchor, int x, int y, int size = 20, const Gdiplus::Color& color = Gdiplus::Color::White);
 
 	/*!
-	 * @brief 文字列描画
+	 * @brief フォーマット指定文字列描画
 	 */
-	void DrawString(Anchor anchor, int x, int y, int size, const Gdiplus::Color& color, const wchar_t* s, ...);
+	void DrawStringFormat(Anchor anchor, int x, int y, int size, const Gdiplus::Color& color, const char* s, ...);
+
+	/*!
+	 * @brief フォーマット指定文字列描画
+	 */
+	void DrawStringFormat(Anchor anchor, int x, int y, int size, const Gdiplus::Color& color, const wchar_t* s, ...);
 
 	/*!
 	 * @brief インスタンス取得

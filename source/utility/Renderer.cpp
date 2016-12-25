@@ -55,11 +55,13 @@ void Renderer::FillRect(int x, int y, int w, int h, const Gdiplus::Color& color)
 void Renderer::DrawImage(Gdiplus::Bitmap* image, Anchor anchor, int x, int y)
 {
 	// アンカーを基準にして表示座標を変える
-	x -= image->GetWidth() / 2 * (anchor % 3);
-	y -= image->GetHeight() / 2 * (anchor / 3);
+	if (anchor != LEFT_TOP) {
+		x -= (image->GetWidth() >> 1) * (anchor % 3);
+		y -= (image->GetHeight() >> 1) * (anchor / 3);
+	}
 
 	// 描画
-	graphics_->DrawImage(image, x, y);
+	graphics_->DrawImage(image, x, y, image->GetWidth(), image->GetHeight());
 }
 
 /*!
@@ -79,8 +81,10 @@ void Renderer::DrawImage(Gdiplus::Bitmap* image, Anchor anchor, int dx, int dy, 
 
 
 	// アンカーを基準にして表示座標を変える
-	dx -= dw / 2 * (anchor % 3);
-	dy -= dh / 2 * (anchor / 3);
+	if (anchor != LEFT_TOP) {
+		dx -= (dw >> 1) * (anchor % 3);
+		dy -= (dh >> 1) * (anchor / 3);
+	}
 
 	// 描画
 	Gdiplus::Rect dst(dx, dy, dw, dh);
@@ -90,33 +94,57 @@ void Renderer::DrawImage(Gdiplus::Bitmap* image, Anchor anchor, int dx, int dy, 
 /*!
  * @brief 文字列描画
  */
-void Renderer::DrawString(const char* s, int x, int y, int size, const Gdiplus::Color& color)
+void Renderer::DrawString(const char* s, Anchor anchor, int x, int y, int size, const Gdiplus::Color& color)
 {
 	if (color.GetA() == 0) return ;
 
-	this->DrawString(LEFT_TOP, x, y, size, color, s);
+	this->DrawString(Utility::SJIStoUTF16(s).c_str(), anchor, x, y, size, color);
 }
 
 /*!
- * @brief 文字描画
+ * @brief 文字列描画
  */
-void Renderer::DrawString(Anchor anchor, int x, int y, int size, const Gdiplus::Color& color, const char* s, ...)
-{
-	if (color.GetA() == 0) return ;
-
-	DrawString(anchor, x, y, size, color, Utility::SJIStoUTF16(s).c_str());
-}
-
-/*!
- * @brief 文字描画
- */
-void Renderer::DrawString(Anchor anchor, int x, int y, int size, const Gdiplus::Color& color, const wchar_t* s, ...)
+void Renderer::DrawString(const wchar_t* s, Anchor anchor, int x, int y, int size, const Gdiplus::Color& color)
 {
 	if (color.GetA() == 0) return ;
 
 	Gdiplus::Font* font = GetFont(size);
-	Gdiplus::RectF range;
 	brush_->SetColor(color);
+
+	// アンカーを基準にして表示座標を変える
+	if (anchor != LEFT_TOP) {
+		Gdiplus::RectF range;
+		graphics_->MeasureString(s, wcslen(s), font, Gdiplus::PointF(), &string_format_, &range);
+		x -= static_cast<int>(range.Width)  / 2 * (anchor % 3);
+		y -= static_cast<int>(range.Height) / 2 * (anchor / 3);
+	}
+
+	graphics_->DrawString(s, wcslen(s), font, Gdiplus::PointF(static_cast<float>(x), static_cast<float>(y)), &string_format_, brush_.get());
+}
+
+/*!
+ * @brief 文字描画
+ */
+void Renderer::DrawStringFormat(Anchor anchor, int x, int y, int size, const Gdiplus::Color& color, const char* s, ...)
+{
+	if (color.GetA() == 0) return ;
+
+	// テキストフォーマットを変換
+	char text[1024];
+	va_list arg;
+	va_start(arg, s);
+	vsprintf(text, s, arg);
+	va_end(arg);
+
+	this->DrawString(Utility::SJIStoUTF16(text).c_str(), anchor, x, y, size, color);
+}
+
+/*!
+ * @brief 文字描画
+ */
+void Renderer::DrawStringFormat(Anchor anchor, int x, int y, int size, const Gdiplus::Color& color, const wchar_t* s, ...)
+{
+	if (color.GetA() == 0) return ;
 
 	// テキストフォーマットを変換
 	wchar_t text[1024];
@@ -124,13 +152,8 @@ void Renderer::DrawString(Anchor anchor, int x, int y, int size, const Gdiplus::
 	va_start(arg, s);
 	vswprintf(text, s, arg);
 	va_end(arg);
-	graphics_->MeasureString(text, wcslen(text), font, Gdiplus::PointF(), &string_format_, &range);
 
-	// アンカーを基準にして表示座標を変える
-	x -= static_cast<int>(range.Width)  / 2 * (anchor % 3);
-	y -= static_cast<int>(range.Height) / 2 * (anchor / 3);
-
-	graphics_->DrawString(text, wcslen(text), font, Gdiplus::PointF(static_cast<float>(x), static_cast<float>(y)), &string_format_, brush_.get());
+	this->DrawString(text, anchor, x, y, size, color);
 }
 
 /*!

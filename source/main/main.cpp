@@ -142,10 +142,9 @@ void MainApp::Update(float df)
 				Gdiplus::Color(info.a, info.r, info.g, info.b));
 		} else if (info.type == 1) {
 			// 文字列描画
-			Renderer::GetInstance()->DrawString(
+			Renderer::GetInstance()->DrawString(info.str.c_str(),
 				static_cast<Anchor>(info.anchor), info.x, info.y, info.h, 
-				Gdiplus::Color(info.a, info.r, info.g, info.b),
-				info.str.c_str());
+				Gdiplus::Color(info.a, info.r, info.g, info.b));
 		}
 	}
 
@@ -169,11 +168,11 @@ void MainApp::Update(float df)
 		"9:Bezier オリジナル",
 	};
 	for (int i = 0; i < sizeof(ds) / sizeof(*ds); ++i) {
-		Renderer::GetInstance()->DrawString(ds[i], 0, i * 16, 12);
+		Renderer::GetInstance()->DrawString(ds[i], LEFT_TOP, 0, i * 16, 12);
 	}
 
 	// FPS表示
-	Renderer::GetInstance()->DrawString(RIGHT_TOP, GetWidth(), 0, 16, Gdiplus::Color::White, _T("FPS:%.1f"), GetAverageFPS());
+	Renderer::GetInstance()->DrawStringFormat(RIGHT_TOP, GetWidth(), 0, 16, Gdiplus::Color::White, _T("FPS:%.1f"), GetAverageFPS());
 }
 
 /*!
