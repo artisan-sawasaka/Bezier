@@ -5,22 +5,23 @@
 #include <memory>
 #include "master/MasterData.hpp"
 
-enum Anchor
-{
-	LEFT_TOP,
-	TOP,
-	RIGHT_TOP,
-	LEFT,
-	CENTER,
-	RIGHT,
-	LEFT_BOTTOM,
-	BOTTOM,
-	RIGHT_BOTTOM,
-};
 
 class Renderer
 {
 public :
+	enum Anchor
+	{
+		LEFT_TOP,
+		TOP,
+		RIGHT_TOP,
+		LEFT,
+		CENTER,
+		RIGHT,
+		LEFT_BOTTOM,
+		BOTTOM,
+		RIGHT_BOTTOM,
+	};
+
 	~Renderer();
 
 	/*!

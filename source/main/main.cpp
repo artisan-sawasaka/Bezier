@@ -125,28 +125,7 @@ void MainApp::Update(float df)
 	Renderer::GetInstance()->ClearScreen(Gdiplus::Color(0, 80, 255));
 
 	// マスターデータに基づく描画処理
-	for (auto it = MasterData::TitleUI.begin(); it != MasterData::TitleUI.end(); ++it) {
-		const auto& info = *it;
-		if (info.type == 0) {
-			// 画像描画
-			auto it2 = MasterData::TitleImageList.find(info.str);
-			if (it2 == MasterData::TitleImageList.end()) continue ;
-			const auto& info2 = it2->second;
-			auto it3 = bitmaps_.find(info2.path);
-			if (it3 == bitmaps_.end()) continue ;
-
-			Renderer::GetInstance()->DrawImage(it3->second.get(),
-				static_cast<Anchor>(info.anchor),
-				info.x,  info.y,  info.w,  info.h,
-				info2.x, info2.y, info2.w, info2.h,
-				Gdiplus::Color(info.a, info.r, info.g, info.b));
-		} else if (info.type == 1) {
-			// 文字列描画
-			Renderer::GetInstance()->DrawString(info.str.c_str(),
-				static_cast<Anchor>(info.anchor), info.x, info.y, info.h, 
-				Gdiplus::Color(info.a, info.r, info.g, info.b));
-		}
-	}
+	Utility::BaseRender(MasterData::TitleImageList, MasterData::TitleUI, bitmaps_);
 
 	// フェード
 	Renderer::GetInstance()->FillRect(0, 0, GetWidth(), GetHeight(), Gdiplus::Color(fade_counter_, 0, 0, 0));
@@ -168,11 +147,11 @@ void MainApp::Update(float df)
 		"9:Bezier オリジナル",
 	};
 	for (int i = 0; i < sizeof(ds) / sizeof(*ds); ++i) {
-		Renderer::GetInstance()->DrawString(ds[i], LEFT_TOP, 0, i * 16, 12);
+		Renderer::GetInstance()->DrawString(ds[i], Renderer::LEFT_TOP, 0, i * 16, 12);
 	}
 
 	// FPS表示
-	Renderer::GetInstance()->DrawStringFormat(RIGHT_TOP, GetWidth(), 0, 16, Gdiplus::Color::White, _T("FPS:%.1f"), GetAverageFPS());
+	Renderer::GetInstance()->DrawStringFormat(Renderer::RIGHT_TOP, GetWidth(), 0, 16, Gdiplus::Color::White, _T("FPS:%.1f"), GetAverageFPS());
 }
 
 /*!
@@ -181,38 +160,16 @@ void MainApp::Update(float df)
 void MainApp::Reload_()
 {
 	// マスターデータを再読み込み
-	char current[MAX_PATH];
-	GetCurrentDirectoryA(sizeof(current), current);
-	SetCurrentDirectoryA("resource");
-	system("call create_binary.bat");
-	SetCurrentDirectoryA(current);
-	MasterData::Reload("data/master");
-
+	Utility::ReloadMasterData();
 
 	// FPSの設定
 	SetFPS(MasterData::Const.FPS);
 
-	// 画像を再読み込み
-	bitmaps_.clear();
-	std::set<std::string> images;
-	for (auto it = MasterData::TitleImageList.begin(); it != MasterData::TitleImageList.end(); ++it) {
-		images.insert(it->second.path);
-	}
-	for (auto it = images.begin(); it != images.end(); ++it) {
-		std::string path = std::string("data/image/") + *it;
-		auto bmp = new Gdiplus::Bitmap(Utility::SJIStoUTF16(path).c_str());
-		if (bmp->GetLastStatus() == Gdiplus::Ok) {
-			bitmaps_[*it].reset(bmp);
-		} else {
-			delete bmp;
-		}
-	}
+	// 画像を読み込み
+	bitmaps_ = Utility::CreateBitmaps(MasterData::TitleImageList);
 
 	// 操作しやすいようにデータ化する
-	objects_.clear();
-	for (auto it = MasterData::TitleUI.begin(); it != MasterData::TitleUI.end(); ++it) {
-		objects_[it->name] = &(*it);
-	}
+	objects_ = Utility::CreateObjects<MasterData::TitleUIData>(MasterData::TitleUI);
 
 	cursour_y_ = objects_["TextCursor"]->y;
 }
@@ -222,4 +179,3 @@ void MainApp::SetBezier_(const Bezier::ControlPoint& cp)
 	bezier_counter_.Set(100, 400, 60, cp);
 	bezier_timer_.Set(100, 400, 1.0f, cp);
 }
-
