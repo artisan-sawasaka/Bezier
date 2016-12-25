@@ -73,8 +73,10 @@ public :
 
 private :
 	Renderer();
+	Gdiplus::Font* GetFont(int size);
 
 	Gdiplus::GdiplusStartupInput gpsi_;
 	ULONG_PTR token_;
 	std::shared_ptr<Gdiplus::Graphics> graphics_;
+	std::map<int, std::shared_ptr<Gdiplus::Font>> fonts_;
 };

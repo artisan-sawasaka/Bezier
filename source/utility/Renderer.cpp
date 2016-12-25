@@ -14,6 +14,7 @@ Renderer::Renderer()
 
 Renderer::~Renderer()
 {
+	fonts_.clear();
 	graphics_.reset();
 	Gdiplus::GdiplusShutdown(token_);
 }
@@ -112,7 +113,7 @@ void Renderer::DrawString(Anchor anchor, int x, int y, int size, const Gdiplus::
 {
 	if (color.GetA() == 0) return ;
 
-	Gdiplus::Font font(L"ＭＳ ゴシック" , static_cast<Gdiplus::REAL>(size));
+	Gdiplus::Font* font = GetFont(size);
 	Gdiplus::SolidBrush brush(color);
 	Gdiplus::StringFormat format(Gdiplus::StringFormatFlagsNoClip);
 	Gdiplus::RectF range;
@@ -124,10 +125,24 @@ void Renderer::DrawString(Anchor anchor, int x, int y, int size, const Gdiplus::
 	vswprintf(text, s, arg);
 	va_end(arg);
 
-	graphics_->MeasureString(text, wcslen(text), &font, Gdiplus::PointF(), &format, &range);
+	graphics_->MeasureString(text, wcslen(text), font, Gdiplus::PointF(), &format, &range);
 	// アンカーを基準にして表示座標を変える
 	x -= static_cast<int>(range.Width)  / 2 * (anchor % 3);
 	y -= static_cast<int>(range.Height) / 2 * (anchor / 3);
 
-	graphics_->DrawString(text, wcslen(text), &font, Gdiplus::PointF(static_cast<float>(x), static_cast<float>(y)), &format, &brush);
+	graphics_->DrawString(text, wcslen(text), font, Gdiplus::PointF(static_cast<float>(x), static_cast<float>(y)), &format, &brush);
+}
+
+/*!
+ * @brief フォントの取得
+ */
+Gdiplus::Font* Renderer::GetFont(int size)
+{
+	auto it = fonts_.find(size);
+	if (it != fonts_.end()) {
+		return fonts_[size].get();
+	}
+	auto p = new Gdiplus::Font(L"ＭＳ ゴシック" , static_cast<Gdiplus::REAL>(size));
+	fonts_.insert(std::pair<int, std::shared_ptr<Gdiplus::Font>>(size, p));
+	return p;
 }

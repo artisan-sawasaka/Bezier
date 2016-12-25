@@ -66,6 +66,7 @@ void MainApp::Finalize()
  */
 void MainApp::Update(float df)
 {
+	auto c = GetKeyState('R');
 	if (GetKeyState('R') < 0) {
 		// マスターデータ再読み込み
 		Reload_();
