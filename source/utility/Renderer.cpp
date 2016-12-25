@@ -14,6 +14,7 @@ Renderer::Renderer()
 
 Renderer::~Renderer()
 {
+	brush_.reset();
 	fonts_.clear();
 	graphics_.reset();
 	Gdiplus::GdiplusShutdown(token_);
@@ -25,6 +26,10 @@ Renderer::~Renderer()
 void Renderer::Initialize(HDC hdc)
 {
 	graphics_.reset(new Gdiplus::Graphics(hdc));
+	brush_.reset(new Gdiplus::SolidBrush(Gdiplus::Color::White));
+	memset(cm_.m, 0, sizeof(cm_.m));
+	cm_.m[4][4] = 1.0f;
+	string_format_.SetFormatFlags(Gdiplus::StringFormatFlagsNoClip);
 }
 
 /*!
@@ -40,8 +45,8 @@ void Renderer::ClearScreen(const Gdiplus::Color& color)
  */
 void Renderer::FillRect(int x, int y, int w, int h, const Gdiplus::Color& color)
 {
-	Gdiplus::SolidBrush brush(color);
-	graphics_->FillRectangle(&brush, x, y, w, h);
+	brush_->SetColor(color);
+	graphics_->FillRectangle(brush_.get(), x, y, w, h);
 }
 
 /*!
@@ -66,16 +71,12 @@ void Renderer::DrawImage(Gdiplus::Bitmap* image, Anchor anchor, int dx, int dy, 
 	if (color.GetA() == 0) return ;
 
 	// 色設定
-	Gdiplus::ImageAttributes ia;
-	Gdiplus::ColorMatrix cm;
-	memset(cm.m, 0, sizeof(cm.m));
-	cm.m[0][0] = color.GetR() / 255.0f;
-	cm.m[1][1] = color.GetG() / 255.0f;
-	cm.m[2][2] = color.GetB() / 255.0f;
-	cm.m[3][3] = color.GetA() / 255.0f;
-	cm.m[4][4] = 1.0f;
+	cm_.m[0][0] = color.GetR() / 255.0f;
+	cm_.m[1][1] = color.GetG() / 255.0f;
+	cm_.m[2][2] = color.GetB() / 255.0f;
+	cm_.m[3][3] = color.GetA() / 255.0f;
+	ia_.SetColorMatrix(&cm_);
 
-	ia.SetColorMatrix(&cm);
 
 	// アンカーを基準にして表示座標を変える
 	dx -= dw / 2 * (anchor % 3);
@@ -83,7 +84,7 @@ void Renderer::DrawImage(Gdiplus::Bitmap* image, Anchor anchor, int dx, int dy, 
 
 	// 描画
 	Gdiplus::Rect dst(dx, dy, dw, dh);
-	graphics_->DrawImage(image, dst, sx, sy, sw, sh, Gdiplus::UnitPixel, & ia);
+	graphics_->DrawImage(image, dst, sx, sy, sw, sh, Gdiplus::UnitPixel, & ia_);
 }
 
 /*!
@@ -114,9 +115,8 @@ void Renderer::DrawString(Anchor anchor, int x, int y, int size, const Gdiplus::
 	if (color.GetA() == 0) return ;
 
 	Gdiplus::Font* font = GetFont(size);
-	Gdiplus::SolidBrush brush(color);
-	Gdiplus::StringFormat format(Gdiplus::StringFormatFlagsNoClip);
 	Gdiplus::RectF range;
+	brush_->SetColor(color);
 
 	// テキストフォーマットを変換
 	wchar_t text[1024];
@@ -124,13 +124,13 @@ void Renderer::DrawString(Anchor anchor, int x, int y, int size, const Gdiplus::
 	va_start(arg, s);
 	vswprintf(text, s, arg);
 	va_end(arg);
+	graphics_->MeasureString(text, wcslen(text), font, Gdiplus::PointF(), &string_format_, &range);
 
-	graphics_->MeasureString(text, wcslen(text), font, Gdiplus::PointF(), &format, &range);
 	// アンカーを基準にして表示座標を変える
 	x -= static_cast<int>(range.Width)  / 2 * (anchor % 3);
 	y -= static_cast<int>(range.Height) / 2 * (anchor / 3);
 
-	graphics_->DrawString(text, wcslen(text), font, Gdiplus::PointF(static_cast<float>(x), static_cast<float>(y)), &format, &brush);
+	graphics_->DrawString(text, wcslen(text), font, Gdiplus::PointF(static_cast<float>(x), static_cast<float>(y)), &string_format_, brush_.get());
 }
 
 /*!
